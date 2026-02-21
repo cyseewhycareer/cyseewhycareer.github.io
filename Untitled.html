@@ -59,16 +59,18 @@
             opacity: 1 !important;
             z-index: 1000;
             will-change: transform;
-            /* 拖動時絕對禁止選取文字 */
+            /* 拖動時絕對禁止選取文字與系統選單 */
             user-select: none !important;
             -webkit-user-select: none !important;
+            -webkit-touch-callout: none !important;
         }
 
-        /* 排序清單項目：禁用文字選取以優化拖拽體驗 */
-        .ranking-item {
+        /* 排序清單項目：在排序模式下預設禁用文字選取以優化拖拽體驗 */
+        .ranking-mode-container {
             user-select: none;
             -webkit-user-select: none;
             -ms-user-select: none;
+            -webkit-touch-callout: none;
         }
 
         /* 卡片響應式佈局 */
@@ -91,6 +93,12 @@
             touch-action: none;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            cursor: grab;
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
         }
     </style>
 </head>
@@ -213,7 +221,7 @@
                 setSelectedCards(selectedCards.filter(item => item.text !== text));
             };
 
-            // 初始化 SortableJS (優化排序流暢度與避免文字選取)
+            // 初始化 SortableJS (加入清除選取的邏輯)
             useEffect(() => {
                 if (step === 2 && sortableContainerRef.current) {
                     const sortable = Sortable.create(sortableContainerRef.current, {
@@ -225,8 +233,11 @@
                         fallbackTolerance: 3,
                         delay: 0,
                         touchStartThreshold: 5,
-                        // 防止拖拽時瀏覽器選取文字或滾動
                         onStart: () => {
+                            // 強制清除當前頁面所有文字選取範圍，避免藍塊產生
+                            if (window.getSelection) {
+                                window.getSelection().removeAllRanges();
+                            }
                             document.body.style.userSelect = 'none';
                             document.body.style.webkitUserSelect = 'none';
                         },
@@ -368,7 +379,7 @@
                             </div>
                         </div>
                     ) : (
-                        <main className="max-w-2xl mx-auto py-16 px-6 space-y-10">
+                        <main className="max-w-2xl mx-auto py-16 px-6 space-y-10 ranking-mode-container">
                             <div className="text-center space-y-4">
                                 <h2 className="font-serif-tc text-2xl tracking-[0.2em] text-[#4A4A4A]">探尋此刻真實的自己</h2>
                                 <p className="text-[11px] tracking-widest opacity-50 uppercase font-sans">Refine and define your priorities</p>
@@ -397,7 +408,7 @@
                                                 <button onClick={() => removeCard(card.text)} className="p-2 text-[#E8E4DE] hover:text-rose-400 transition-colors">
                                                     <Icons.Trash />
                                                 </button>
-                                                <div className="drag-handle p-4 -mr-4 cursor-grab active:cursor-grabbing opacity-30 hover:opacity-100 transition-opacity touch-none">
+                                                <div className="drag-handle p-4 -mr-4 opacity-30 hover:opacity-100 transition-opacity touch-none">
                                                     <Icons.Grip />
                                                 </div>
                                             </div>
