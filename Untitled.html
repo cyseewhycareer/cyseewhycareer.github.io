@@ -58,8 +58,17 @@
             border-color: #545B64 !important;
             opacity: 1 !important;
             z-index: 1000;
-            /* 開啟硬體加速 */
             will-change: transform;
+            /* 拖動時絕對禁止選取文字 */
+            user-select: none !important;
+            -webkit-user-select: none !important;
+        }
+
+        /* 排序清單項目：禁用文字選取以優化拖拽體驗 */
+        .ranking-item {
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
         }
 
         /* 卡片響應式佈局 */
@@ -74,7 +83,6 @@
         @media (min-width: 1024px) { .card-grid { grid-template-columns: repeat(5, 1fr); } }
         @media (min-width: 1280px) { .card-grid { grid-template-columns: repeat(6, 1fr); } }
 
-        /* 確保內容底部有足夠間距，不被懸浮列遮擋 */
         .main-content-pb {
             padding-bottom: 9rem;
         }
@@ -82,6 +90,7 @@
         .drag-handle {
             touch-action: none;
             user-select: none;
+            -webkit-user-select: none;
         }
     </style>
 </head>
@@ -168,7 +177,6 @@
             const [rankedList, setRankedList] = useState([]);
             const sortableContainerRef = useRef(null);
 
-            // 初始隨機洗牌，使用 useMemo 避免在選取過程中重新排列導致視覺閃爍
             const shuffledCards = useMemo(() => {
                 let arr = [...VALUE_CARDS];
                 for (let i = arr.length - 1; i > 0; i--) {
@@ -205,20 +213,26 @@
                 setSelectedCards(selectedCards.filter(item => item.text !== text));
             };
 
-            // 初始化 SortableJS (針對手機端極致優化)
+            // 初始化 SortableJS (優化排序流暢度與避免文字選取)
             useEffect(() => {
                 if (step === 2 && sortableContainerRef.current) {
                     const sortable = Sortable.create(sortableContainerRef.current, {
-                        animation: 200,          // 更輕快的動畫
-                        handle: '.drag-handle',  // 專屬手把觸發
+                        animation: 200,
+                        handle: '.drag-handle',
                         ghostClass: 'sortable-ghost',
                         dragClass: 'sortable-drag',
-                        forceFallback: true,     // 確保手機端視覺一致
-                        fallbackTolerance: 3,    // 容許微小位移，防止點擊誤判為拖曳
-                        delay: 0,                // 無延遲立即反應
-                        touchStartThreshold: 5,  // 手指移動多少 px 才開始拖曳，避免誤觸頁面滾動
+                        forceFallback: true,
+                        fallbackTolerance: 3,
+                        delay: 0,
+                        touchStartThreshold: 5,
+                        // 防止拖拽時瀏覽器選取文字或滾動
+                        onStart: () => {
+                            document.body.style.userSelect = 'none';
+                            document.body.style.webkitUserSelect = 'none';
+                        },
                         onEnd: (evt) => {
-                            // 使用 Functional Update 確保狀態正確
+                            document.body.style.userSelect = '';
+                            document.body.style.webkitUserSelect = '';
                             setRankedList(prev => {
                                 const newList = [...prev];
                                 const [movedItem] = newList.splice(evt.oldIndex, 1);
@@ -229,7 +243,7 @@
                     });
                     return () => sortable.destroy();
                 }
-            }, [step]); // 只在進入排序頁面時初始化一次
+            }, [step]);
 
             const getCategoryStyle = (cat) => {
                 switch (cat) {
@@ -252,7 +266,7 @@
 
             return (
                 <div className="min-h-screen">
-                    {/* Header 頂部導航 */}
+                    {/* Header */}
                     <header className="bg-white border-b border-[#E8E4DE] sticky top-0 z-[60] px-6 py-4">
                         <div className="max-w-7xl mx-auto flex justify-between items-center">
                             <div>
@@ -276,7 +290,7 @@
                                     </p>
                                 </div>
 
-                                {/* 類別篩選器 */}
+                                {/* Filter Bar */}
                                 <div className="flex flex-wrap justify-center gap-2 mb-10 sticky top-[80px] z-40 bg-[#F5F2EDBF] backdrop-blur-sm py-2">
                                     {CATEGORIES.map(cat => (
                                         <button
@@ -291,7 +305,7 @@
                                     ))}
                                 </div>
 
-                                {/* 牌卡格網 */}
+                                {/* Card Grid */}
                                 <div className="card-grid">
                                     {filteredCards.map(card => {
                                         const isSelected = selectedCards.some(c => c.text === card.text);
@@ -322,7 +336,7 @@
                                 <CommonFooter />
                             </main>
 
-                            {/* 底部懸浮已選區塊 */}
+                            {/* Bottom Tray */}
                             <div className="fixed bottom-0 left-0 w-full z-[70] bg-[#F5F2ED]/95 backdrop-blur-lg border-t border-[#E8E4DE] shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
                                 <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2 h-16 sm:h-20">
                                     <div className="flex-shrink-0 flex flex-col items-center justify-center px-1">
@@ -331,7 +345,7 @@
                                     </div>
                                     <div className="flex-grow flex gap-2 overflow-x-auto hide-scrollbar items-center py-1">
                                         {selectedCards.length === 0 ? (
-                                            <span className="text-[10px] opacity-40 tracking-widest italic font-serif-tc ml-2">尚未挑選牌卡</span>
+                                            <span className="text-[10px] opacity-40 tracking-widest italic font-serif-tc ml-2 text-center w-full">尚未挑選牌卡</span>
                                         ) : (
                                             selectedCards.map(card => (
                                                 <div key={card.text} className="flex-shrink-0 w-20 h-12 sm:w-24 sm:h-14 bg-white border border-[#E8E4DE] rounded-sm px-2 py-1 relative flex items-center justify-center shadow-sm">
@@ -366,12 +380,11 @@
                                 <button onClick={() => setStep(1)} className="text-[10px] tracking-[0.2em] uppercase border-b border-[#E8E4DE] pb-1 hover:text-[#545B64] transition-colors mt-4 inline-block font-sans">返回選取更多</button>
                             </div>
 
-                            {/* 排序清單區塊：使用 SortableJS 接管拖拽 */}
                             <div ref={sortableContainerRef} className="space-y-3 pb-10">
                                 {rankedList.map((card, index) => {
                                     const style = getCategoryStyle(card.category);
                                     return (
-                                        <div key={card.text} className="bg-white border border-[#E8E4DE] rounded-sm p-4 md:p-5 flex items-center gap-4 md:gap-8 shadow-sm transition-all group relative">
+                                        <div key={card.text} className="ranking-item bg-white border border-[#E8E4DE] rounded-sm p-4 md:p-5 flex items-center gap-4 md:gap-8 shadow-sm transition-all group relative">
                                             <div className="font-serif-tc italic text-[11px] text-[#BCB0A1] w-4 shrink-0">{String(index + 1).padStart(2, '0')}</div>
                                             <div className="flex-grow">
                                                 <div className="text-[15px] md:text-[16px] tracking-[0.15em] font-serif-tc text-[#4A4A4A]">{card.text}</div>
@@ -384,7 +397,6 @@
                                                 <button onClick={() => removeCard(card.text)} className="p-2 text-[#E8E4DE] hover:text-rose-400 transition-colors">
                                                     <Icons.Trash />
                                                 </button>
-                                                {/* 強化後的手把區域 */}
                                                 <div className="drag-handle p-4 -mr-4 cursor-grab active:cursor-grabbing opacity-30 hover:opacity-100 transition-opacity touch-none">
                                                     <Icons.Grip />
                                                 </div>
