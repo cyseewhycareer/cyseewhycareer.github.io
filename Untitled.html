@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CY see why | 價值觀探尋系統</title>
     
     <!-- 核心庫載入：React, Babel, Tailwind, SortableJS -->
@@ -31,6 +31,15 @@
             overflow-x: hidden;
         }
 
+        /* 核心選取阻斷樣式：當拖動發生時強制套用 */
+        body.is-dragging, 
+        body.is-dragging * {
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -ms-user-select: none !important;
+            -webkit-touch-callout: none !important;
+        }
+
         .font-serif-tc {
             font-family: 'Noto Serif TC', serif;
         }
@@ -46,31 +55,19 @@
 
         /* 排序視覺效果極致優化 */
         .sortable-ghost {
-            opacity: 0.15;
+            opacity: 0.1;
             background: #D1D5DB !important;
             border: 2px dashed #9CA3AF !important;
         }
         
         .sortable-drag {
             cursor: grabbing !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.25);
             background: white !important;
             border-color: #545B64 !important;
             opacity: 1 !important;
             z-index: 1000;
             will-change: transform;
-            /* 拖動時絕對禁止選取文字與系統選單 */
-            user-select: none !important;
-            -webkit-user-select: none !important;
-            -webkit-touch-callout: none !important;
-        }
-
-        /* 排序清單項目：在排序模式下預設禁用文字選取以優化拖拽體驗 */
-        .ranking-mode-container {
-            user-select: none;
-            -webkit-user-select: none;
-            -ms-user-select: none;
-            -webkit-touch-callout: none;
         }
 
         /* 卡片響應式佈局 */
@@ -90,15 +87,10 @@
         }
 
         .drag-handle {
-            touch-action: none;
+            touch-action: none; /* 防止與瀏覽器滾動手勢衝突 */
             user-select: none;
             -webkit-user-select: none;
-            -webkit-touch-callout: none;
             cursor: grab;
-        }
-        
-        .drag-handle:active {
-            cursor: grabbing;
         }
     </style>
 </head>
@@ -221,11 +213,14 @@
                 setSelectedCards(selectedCards.filter(item => item.text !== text));
             };
 
-            // 初始化 SortableJS (加入清除選取的邏輯)
+            // 初始化 SortableJS (加入雙重阻斷邏輯)
             useEffect(() => {
                 if (step === 2 && sortableContainerRef.current) {
+                    // 事件阻斷器
+                    const preventSelection = (e) => e.preventDefault();
+
                     const sortable = Sortable.create(sortableContainerRef.current, {
-                        animation: 200,
+                        animation: 250,
                         handle: '.drag-handle',
                         ghostClass: 'sortable-ghost',
                         dragClass: 'sortable-drag',
@@ -234,16 +229,21 @@
                         delay: 0,
                         touchStartThreshold: 5,
                         onStart: () => {
-                            // 強制清除當前頁面所有文字選取範圍，避免藍塊產生
+                            // 1. 清除現有選取範圍
                             if (window.getSelection) {
                                 window.getSelection().removeAllRanges();
                             }
-                            document.body.style.userSelect = 'none';
-                            document.body.style.webkitUserSelect = 'none';
+                            // 2. 加入全局鎖定 class
+                            document.body.classList.add('is-dragging');
+                            // 3. 監聽並攔截選取事件
+                            window.addEventListener('selectstart', preventSelection);
                         },
                         onEnd: (evt) => {
-                            document.body.style.userSelect = '';
-                            document.body.style.webkitUserSelect = '';
+                            // 1. 移除鎖定
+                            document.body.classList.remove('is-dragging');
+                            window.removeEventListener('selectstart', preventSelection);
+                            
+                            // 2. 更新狀態
                             setRankedList(prev => {
                                 const newList = [...prev];
                                 const [movedItem] = newList.splice(evt.oldIndex, 1);
