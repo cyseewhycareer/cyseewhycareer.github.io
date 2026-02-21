@@ -28,6 +28,7 @@
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
         }
 
         .font-serif-tc {
@@ -43,18 +44,22 @@
             scrollbar-width: none;
         }
 
-        /* 排序視覺效果優化 */
+        /* 排序視覺效果極致優化 */
         .sortable-ghost {
-            opacity: 0.2;
-            transform: scale(0.95);
+            opacity: 0.15;
+            background: #D1D5DB !important;
+            border: 2px dashed #9CA3AF !important;
         }
         
         .sortable-drag {
             cursor: grabbing !important;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
             background: white !important;
             border-color: #545B64 !important;
+            opacity: 1 !important;
             z-index: 1000;
+            /* 開啟硬體加速 */
+            will-change: transform;
         }
 
         /* 卡片響應式佈局 */
@@ -69,9 +74,14 @@
         @media (min-width: 1024px) { .card-grid { grid-template-columns: repeat(5, 1fr); } }
         @media (min-width: 1280px) { .card-grid { grid-template-columns: repeat(6, 1fr); } }
 
-        /* 確保底部托盤不遮擋內容 */
+        /* 確保內容底部有足夠間距，不被懸浮列遮擋 */
         .main-content-pb {
-            padding-bottom: 8rem;
+            padding-bottom: 9rem;
+        }
+
+        .drag-handle {
+            touch-action: none;
+            user-select: none;
         }
     </style>
 </head>
@@ -81,7 +91,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // SVG 圖示系統，確保離線與 CDN 載入失敗時仍能顯示
+        // SVG 圖示系統
         const Icons = {
             Briefcase: () => (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
@@ -158,7 +168,7 @@
             const [rankedList, setRankedList] = useState([]);
             const sortableContainerRef = useRef(null);
 
-            // 初始隨機洗牌，使用 useMemo 避免在選取過程中重新排列
+            // 初始隨機洗牌，使用 useMemo 避免在選取過程中重新排列導致視覺閃爍
             const shuffledCards = useMemo(() => {
                 let arr = [...VALUE_CARDS];
                 for (let i = arr.length - 1; i > 0; i--) {
@@ -195,25 +205,31 @@
                 setSelectedCards(selectedCards.filter(item => item.text !== text));
             };
 
-            // 初始化 SortableJS (確保排序流暢度)
+            // 初始化 SortableJS (針對手機端極致優化)
             useEffect(() => {
                 if (step === 2 && sortableContainerRef.current) {
                     const sortable = Sortable.create(sortableContainerRef.current, {
-                        animation: 350,
-                        handle: '.drag-handle',
+                        animation: 200,          // 更輕快的動畫
+                        handle: '.drag-handle',  // 專屬手把觸發
                         ghostClass: 'sortable-ghost',
                         dragClass: 'sortable-drag',
-                        forceFallback: true, // 提升手機版相容性
+                        forceFallback: true,     // 確保手機端視覺一致
+                        fallbackTolerance: 3,    // 容許微小位移，防止點擊誤判為拖曳
+                        delay: 0,                // 無延遲立即反應
+                        touchStartThreshold: 5,  // 手指移動多少 px 才開始拖曳，避免誤觸頁面滾動
                         onEnd: (evt) => {
-                            const newList = [...rankedList];
-                            const [movedItem] = newList.splice(evt.oldIndex, 1);
-                            newList.splice(evt.newIndex, 0, movedItem);
-                            setRankedList(newList);
+                            // 使用 Functional Update 確保狀態正確
+                            setRankedList(prev => {
+                                const newList = [...prev];
+                                const [movedItem] = newList.splice(evt.oldIndex, 1);
+                                newList.splice(evt.newIndex, 0, movedItem);
+                                return newList;
+                            });
                         }
                     });
                     return () => sortable.destroy();
                 }
-            }, [step, rankedList.length]);
+            }, [step]); // 只在進入排序頁面時初始化一次
 
             const getCategoryStyle = (cat) => {
                 switch (cat) {
@@ -296,7 +312,7 @@
                                                         {style.icon}
                                                     </div>
                                                 </div>
-                                                <div className="flex-grow flex items-center justify-center text-center font-serif-tc tracking-widest text-[13px] sm:text-[14px] leading-relaxed">
+                                                <div className="flex-grow flex items-center justify-center text-center font-serif-tc tracking-widest text-[13px] sm:text-[14px] leading-relaxed px-1">
                                                     {card.text}
                                                 </div>
                                             </div>
@@ -350,13 +366,13 @@
                                 <button onClick={() => setStep(1)} className="text-[10px] tracking-[0.2em] uppercase border-b border-[#E8E4DE] pb-1 hover:text-[#545B64] transition-colors mt-4 inline-block font-sans">返回選取更多</button>
                             </div>
 
-                            {/* 排序清單區塊 */}
+                            {/* 排序清單區塊：使用 SortableJS 接管拖拽 */}
                             <div ref={sortableContainerRef} className="space-y-3 pb-10">
                                 {rankedList.map((card, index) => {
                                     const style = getCategoryStyle(card.category);
                                     return (
                                         <div key={card.text} className="bg-white border border-[#E8E4DE] rounded-sm p-4 md:p-5 flex items-center gap-4 md:gap-8 shadow-sm transition-all group relative">
-                                            <div className="font-serif-tc italic text-[11px] text-[#BCB0A1] w-4">{String(index + 1).padStart(2, '0')}</div>
+                                            <div className="font-serif-tc italic text-[11px] text-[#BCB0A1] w-4 shrink-0">{String(index + 1).padStart(2, '0')}</div>
                                             <div className="flex-grow">
                                                 <div className="text-[15px] md:text-[16px] tracking-[0.15em] font-serif-tc text-[#4A4A4A]">{card.text}</div>
                                                 <div className="flex items-center gap-2 mt-1.5 opacity-60">
@@ -364,11 +380,12 @@
                                                     <span className="text-[9px] tracking-[0.1em] font-bold" style={{ color: style.color }}>{card.category}</span>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 sm:gap-4">
+                                            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                                                 <button onClick={() => removeCard(card.text)} className="p-2 text-[#E8E4DE] hover:text-rose-400 transition-colors">
                                                     <Icons.Trash />
                                                 </button>
-                                                <div className="drag-handle p-3 -mr-2 cursor-grab active:cursor-grabbing opacity-30 group-hover:opacity-100 transition-opacity touch-none">
+                                                {/* 強化後的手把區域 */}
+                                                <div className="drag-handle p-4 -mr-4 cursor-grab active:cursor-grabbing opacity-30 hover:opacity-100 transition-opacity touch-none">
                                                     <Icons.Grip />
                                                 </div>
                                             </div>
