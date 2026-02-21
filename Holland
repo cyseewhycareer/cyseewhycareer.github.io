@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>六大性格特質 - CY see why</title>
-    <!-- 引入必要的外部資源 -->
+    <!-- 引入必要的外部資源：Tailwind CSS, FontAwesome, Google Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -34,18 +34,19 @@
         }
 
         .glass-nav {
-            background: rgba(250, 249, 246, 0.9);
+            background: rgba(250, 249, 246, 0.95);
             backdrop-filter: blur(8px);
             border-bottom: 1px solid rgba(0,0,0,0.05);
         }
 
-        /* 牌卡互動樣式 */
+        /* 牌卡基礎樣式 */
         .draggable-card {
             transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             user-select: none;
             position: relative;
         }
 
+        /* 選中狀態強化 */
         .card-selected {
             transform: scale(1.05) translateY(-10px);
             box-shadow: 0 30px 60px rgba(141, 125, 119, 0.25);
@@ -54,6 +55,7 @@
             z-index: 50;
         }
 
+        /* 選中後的勾選標誌 */
         .card-selected::after {
             content: '\f058';
             font-family: 'Font Awesome 5 Free';
@@ -79,7 +81,7 @@
             100% { transform: scale(1); }
         }
 
-        /* 底部快速選單 */
+        /* 底部操作面板 */
         #action-panel {
             transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             transform: translateY(100%);
@@ -88,6 +90,7 @@
             transform: translateY(0);
         }
 
+        /* 遮罩 */
         #overlay {
             transition: opacity 0.4s ease;
             pointer-events: none;
@@ -114,13 +117,13 @@
             font-weight: 500;
         }
 
+        /* 資訊區塊設計 */
         .info-box {
             border-radius: 12px;
             padding: 14px;
             margin-top: auto;
         }
 
-        /* 行動版優化：橫向滑動池 */
         @media (max-width: 768px) {
             .mobile-scroll-pool {
                 display: flex;
@@ -139,6 +142,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* 分類區塊動畫 */
         .card-enter-anim {
             animation: cardDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
@@ -150,10 +154,10 @@
 </head>
 <body class="min-h-screen pb-32">
 
-    <!-- 點擊遮罩 -->
+    <!-- 全局遮罩 -->
     <div id="overlay" class="fixed inset-0 bg-black/5 z-40 opacity-0" onclick="cancelSelection()"></div>
 
-    <!-- 導覽列：左上角品牌識別 -->
+    <!-- 導覽列 (左上角品牌識別固定) -->
     <nav class="fixed w-full z-50 glass-nav top-0">
         <div class="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
             <div class="flex flex-col py-1">
@@ -167,7 +171,7 @@
         </div>
     </nav>
 
-    <!-- 主標題區：置中對齊 -->
+    <!-- 標題區 (置中對齊) -->
     <header class="pt-28 pb-8 text-center px-8 max-w-7xl mx-auto">
         <div class="flex flex-col space-y-1">
             <span class="text-xs md:text-sm tracking-[0.5em] text-slate-400 uppercase font-light">CY SEE WHY</span>
@@ -183,7 +187,7 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-8">
         
-        <!-- 牌卡池 -->
+        <!-- 待分類牌卡池 -->
         <div class="mb-10">
             <h2 class="text-xs font-medium text-slate-400 tracking-widest flex items-center mb-6 px-2">
                 <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mr-2"></span> 待探索的牌卡
@@ -206,7 +210,7 @@
                 <div id="card-investigator" draggable="true" ondragstart="drag(event)" onclick="selectCard(this)" class="draggable-card cursor-pointer bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col">
                     <div class="card-tag" style="background-color: var(--morandi-investigator);">INVESTIGATOR (I)</div>
                     <h3 class="text-base font-bold text-slate-700 mb-2">I - Investigator (分析智識者)</h3>
-                    <p class="text-[13px] text-slate-400 leading-relaxed mb-6">核心動力： 來自於對知識、真理與分析的重視。這類性格擅長邏輯推演與理論鑽研，面對問題時傾向於深入探索其本質。高度依賴證據與數據。</p>
+                    <p class="text-[13px] text-slate-400 leading-relaxed mb-6">核心動力： 來自於對知識、真理與分析的重視。這類性格擅長邏輯推演與理論鑽研，面對問題時傾向於深入探索其本質。</p>
                     <div class="info-box" style="background-color: rgba(146, 168, 209, 0.1);">
                         <div class="mb-2"><span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--morandi-investigator);">關鍵精神</span><p class="text-[12px] text-slate-500 leading-normal">好奇心、獨立思考、追求真理與數據。</p></div>
                         <div><span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--morandi-investigator);">口頭禪</span><p class="text-[12px] text-slate-500 italic">「這個結論的數據來源是什麼？」</p></div>
@@ -239,7 +243,7 @@
                 <div id="card-effort-driver" draggable="true" ondragstart="drag(event)" onclick="selectCard(this)" class="draggable-card cursor-pointer bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col">
                     <div class="card-tag" style="background-color: var(--morandi-effortdriver);">EFFORT-DRIVER (E)</div>
                     <h3 class="text-base font-bold text-slate-700 mb-2">E - Effort-driver (成就驅動者)</h3>
-                    <p class="text-[13px] text-slate-400 leading-relaxed mb-6">核心動力： 來自於對目標達成、主導權與價值轉化的渴望。具備強烈的主導意識，將工作視為擴大影響力的過程。</p>
+                    <p class="text-[13px] text-slate-400 leading-relaxed mb-6">核心動力： 來自於對目標達成、主導權與價值轉化的渴望。具備強烈的主導意識。</p>
                     <div class="info-box" style="background-color: rgba(194, 176, 145, 0.1);">
                         <div class="mb-2"><span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--morandi-effortdriver);">關鍵精神</span><p class="text-[12px] text-slate-500 leading-normal">說服他人、追求成就、主導局面、目標導向。</p></div>
                         <div><span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--morandi-effortdriver);">口頭禪</span><p class="text-[12px] text-slate-500 italic">「目標是？這樣做一定會看到成果。」</p></div>
@@ -250,7 +254,7 @@
                 <div id="card-coordinator" draggable="true" ondragstart="drag(event)" onclick="selectCard(this)" class="draggable-card cursor-pointer bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col">
                     <div class="card-tag" style="background-color: var(--morandi-coordinator);">COORDINATOR (C)</div>
                     <h3 class="text-base font-bold text-slate-700 mb-2">C - Coordinator (效率組織者)</h3>
-                    <p class="text-[13px] text-slate-400 leading-relaxed mb-6">核心動力： 來自於對秩序、精確與計畫性的堅持。擅長處理數據與細節。是計劃完美落地的守門員。</p>
+                    <p class="text-[13px] text-slate-400 leading-relaxed mb-6">核心動力： 來自於對秩序、精確與計畫性的堅持。是計劃完美落地的守門員。</p>
                     <div class="info-box" style="background-color: rgba(158, 158, 158, 0.1);">
                         <div class="mb-2"><span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--morandi-coordinator);">關鍵精神</span><p class="text-[12px] text-slate-500 leading-normal">組織秩序、細心精確、確保品質、穩定執行。</p></div>
                         <div><span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--morandi-coordinator);">口頭禪</span><p class="text-[12px] text-slate-500 italic">「照這個流程確認，才能確保萬無一失。」</p></div>
@@ -259,41 +263,33 @@
             </div>
         </div>
 
-        <!-- 分類區塊 -->
+        <!-- 分類顯示區塊 -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- 相似 -->
             <div class="flex flex-col">
                 <div class="border-b border-slate-200 pb-2 mb-6 flex justify-between items-end px-2">
                     <h3 class="text-sm font-bold tracking-[0.2em] text-slate-600">性格相似</h3>
                     <span class="count-badge text-[10px] text-slate-400 italic" id="count-similar">Count: 0</span>
                 </div>
-                <div id="zone-similar" class="drop-zone p-5 border border-dashed border-slate-200 rounded-xl flex flex-col gap-8" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
-                </div>
+                <div id="zone-similar" class="drop-zone p-5 border border-dashed border-slate-200 rounded-xl flex flex-col gap-8" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)"></div>
             </div>
-
-            <!-- 中等 -->
             <div class="flex flex-col">
                 <div class="border-b border-slate-200 pb-2 mb-6 flex justify-between items-end px-2">
                     <h3 class="text-sm font-bold tracking-[0.2em] text-slate-600">程度中等</h3>
                     <span class="count-badge text-[10px] text-slate-400 italic" id="count-moderate">Count: 0</span>
                 </div>
-                <div id="zone-moderate" class="drop-zone p-5 border border-dashed border-slate-200 rounded-xl flex flex-col gap-8" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
-                </div>
+                <div id="zone-moderate" class="drop-zone p-5 border border-dashed border-slate-200 rounded-xl flex flex-col gap-8" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)"></div>
             </div>
-
-            <!-- 不像 -->
             <div class="flex flex-col">
                 <div class="border-b border-slate-200 pb-2 mb-6 flex justify-between items-end px-2">
                     <h3 class="text-sm font-bold tracking-[0.2em] text-slate-600">性格不像</h3>
                     <span class="count-badge text-[10px] text-slate-400 italic" id="count-unlike">Count: 0</span>
                 </div>
-                <div id="zone-unlike" class="drop-zone p-5 border border-dashed border-slate-200 rounded-xl flex flex-col gap-8" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
-                </div>
+                <div id="zone-unlike" class="drop-zone p-5 border border-dashed border-slate-200 rounded-xl flex flex-col gap-8" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)"></div>
             </div>
         </div>
     </main>
 
-    <!-- 底部動作面板 -->
+    <!-- 快速操作面板 -->
     <div id="action-panel" class="fixed bottom-0 left-0 right-0 z-50 p-6 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-[32px]">
         <div class="max-w-2xl mx-auto">
             <div class="flex items-center justify-between mb-6 px-2">
@@ -301,28 +297,15 @@
                     <span class="text-[10px] uppercase tracking-widest text-slate-400">移動當前牌卡</span>
                     <h4 id="selected-card-name" class="text-sm font-bold text-slate-700 italic">選擇分類...</h4>
                 </div>
-                <button onclick="cancelSelection()" class="text-slate-400 hover:text-slate-600">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button onclick="cancelSelection()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
             </div>
             <div class="grid grid-cols-3 gap-3">
-                <button onclick="moveCurrentCard('zone-similar')" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 transition-all active:scale-95">
-                    <i class="fas fa-check-circle text-lg"></i>
-                    <span class="text-xs font-bold">相似</span>
-                </button>
-                <button onclick="moveCurrentCard('zone-moderate')" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 transition-all active:scale-95">
-                    <i class="fas fa-dot-circle text-lg"></i>
-                    <span class="text-xs font-bold">中等</span>
-                </button>
-                <button onclick="moveCurrentCard('zone-unlike')" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400 transition-all active:scale-95">
-                    <i class="fas fa-times-circle text-lg"></i>
-                    <span class="text-xs font-bold">不像</span>
-                </button>
+                <button onclick="moveCurrentCard('zone-similar')" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 transition-all active:scale-95"><i class="fas fa-check-circle text-lg"></i><span class="text-xs font-bold">相似</span></button>
+                <button onclick="moveCurrentCard('zone-moderate')" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 transition-all active:scale-95"><i class="fas fa-dot-circle text-lg"></i><span class="text-xs font-bold">中等</span></button>
+                <button onclick="moveCurrentCard('zone-unlike')" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400 transition-all active:scale-95"><i class="fas fa-times-circle text-lg"></i><span class="text-xs font-bold">不像</span></button>
             </div>
             <div class="mt-4 pt-4 border-t border-slate-50 text-center">
-                <button onclick="moveCurrentCard('card-pool')" class="text-[10px] text-slate-400 hover:text-slate-600 tracking-widest uppercase">
-                    <i class="fas fa-reply mr-1"></i> 放回待分類池
-                </button>
+                <button onclick="moveCurrentCard('card-pool')" class="text-[10px] text-slate-400 hover:text-slate-600 tracking-widest uppercase"><i class="fas fa-reply mr-1"></i> 放回待分類池</button>
             </div>
         </div>
     </div>
@@ -330,15 +313,9 @@
     <script>
         let selectedElement = null;
 
-        // 選取與取消邏輯
         function selectCard(el) {
-            if (selectedElement === el) {
-                cancelSelection();
-                return;
-            }
-            if (selectedElement) {
-                selectedElement.classList.remove('card-selected');
-            }
+            if (selectedElement === el) { cancelSelection(); return; }
+            if (selectedElement) { selectedElement.classList.remove('card-selected'); }
             selectedElement = el;
             selectedElement.classList.add('card-selected');
             document.getElementById('selected-card-name').innerText = el.querySelector('h3').innerText;
@@ -349,15 +326,11 @@
         }
 
         function cancelSelection() {
-            if (selectedElement) {
-                selectedElement.classList.remove('card-selected');
-                selectedElement = null;
-            }
+            if (selectedElement) { selectedElement.classList.remove('card-selected'); selectedElement = null; }
             document.getElementById('action-panel').classList.remove('show');
             document.getElementById('overlay').classList.remove('active');
         }
 
-        // 移動邏輯
         function moveCurrentCard(targetId) {
             if (!selectedElement) return;
             const targetZone = document.getElementById(targetId);
@@ -372,24 +345,9 @@
             }
         }
 
-        // 傳統拖放邏輯 (電腦版)
-        function allowDrop(ev) {
-            ev.preventDefault();
-            const targetZone = ev.target.closest('.drop-zone') || ev.target.closest('#card-pool');
-            if (targetZone) targetZone.classList.add('bg-white/90', 'border-indigo-200');
-        }
-
-        function leaveDrop(ev) {
-            const targetZone = ev.target.closest('.drop-zone') || ev.target.closest('#card-pool');
-            if (targetZone) targetZone.classList.remove('bg-white/90', 'border-indigo-200');
-        }
-
-        function drag(ev) {
-            ev.dataTransfer.setData("text", ev.target.id);
-            ev.target.classList.add('opacity-40');
-            cancelSelection();
-        }
-
+        function allowDrop(ev) { ev.preventDefault(); const targetZone = ev.target.closest('.drop-zone') || ev.target.closest('#card-pool'); if (targetZone) targetZone.classList.add('bg-white/90', 'border-indigo-200'); }
+        function leaveDrop(ev) { const targetZone = ev.target.closest('.drop-zone') || ev.target.closest('#card-pool'); if (targetZone) targetZone.classList.remove('bg-white/90', 'border-indigo-200'); }
+        function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); ev.target.classList.add('opacity-40'); cancelSelection(); }
         function drop(ev) {
             ev.preventDefault();
             const data = ev.dataTransfer.getData("text");
@@ -397,17 +355,11 @@
             if (!card) return;
             card.classList.remove('opacity-40');
             const targetZone = ev.target.closest('.drop-zone') || ev.target.closest('#card-pool');
-            if (targetZone) {
-                targetZone.classList.remove('bg-white/90', 'border-indigo-200');
-                targetZone.appendChild(card);
-                updateCounts();
-            }
+            if (targetZone) { targetZone.classList.remove('bg-white/90', 'border-indigo-200'); targetZone.appendChild(card); updateCounts(); }
         }
 
-        // 更新計數
         function updateCounts() {
-            const zones = ['similar', 'moderate', 'unlike'];
-            zones.forEach(id => {
+            ['similar', 'moderate', 'unlike'].forEach(id => {
                 const zone = document.getElementById('zone-' + id);
                 const count = zone.querySelectorAll('.draggable-card').length;
                 const countEl = document.getElementById('count-' + id);
@@ -415,19 +367,14 @@
             });
         }
 
-        // 全部重置
         function resetBoard() {
             const pool = document.getElementById('card-pool');
-            const cards = document.querySelectorAll('.draggable-card');
-            cards.forEach(card => {
-                pool.appendChild(card);
-            });
+            document.querySelectorAll('.draggable-card').forEach(card => pool.appendChild(card));
             cancelSelection();
             updateCounts();
         }
 
         window.onload = updateCounts;
-
         document.addEventListener('click', (e) => {
             if (selectedElement && !e.target.closest('.draggable-card') && !e.target.closest('.drop-zone') && !e.target.closest('#action-panel')) {
                 cancelSelection();
