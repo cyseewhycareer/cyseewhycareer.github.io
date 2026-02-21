@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CY see why | 價值觀探尋系統</title>
     
-    <!-- 核心庫載入 -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- 核心庫載入：React, Babel, Tailwind, SortableJS -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
+    <!-- 字體載入：Noto Serif TC -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
@@ -41,7 +43,7 @@
             scrollbar-width: none;
         }
 
-        /* 排序動畫與樣式 */
+        /* 排序視覺效果優化 */
         .sortable-ghost {
             opacity: 0.2;
             transform: scale(0.95);
@@ -55,6 +57,7 @@
             z-index: 1000;
         }
 
+        /* 卡片響應式佈局 */
         .card-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -78,7 +81,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // 圖示組件庫 (直接使用 SVG 以確保穩定)
+        // SVG 圖示系統，確保離線與 CDN 載入失敗時仍能顯示
         const Icons = {
             Briefcase: () => (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
@@ -155,7 +158,7 @@
             const [rankedList, setRankedList] = useState([]);
             const sortableContainerRef = useRef(null);
 
-            // 初始隨機洗牌
+            // 初始隨機洗牌，使用 useMemo 避免在選取過程中重新排列
             const shuffledCards = useMemo(() => {
                 let arr = [...VALUE_CARDS];
                 for (let i = arr.length - 1; i > 0; i--) {
@@ -192,7 +195,7 @@
                 setSelectedCards(selectedCards.filter(item => item.text !== text));
             };
 
-            // 初始化 SortableJS
+            // 初始化 SortableJS (確保排序流暢度)
             useEffect(() => {
                 if (step === 2 && sortableContainerRef.current) {
                     const sortable = Sortable.create(sortableContainerRef.current, {
@@ -200,7 +203,7 @@
                         handle: '.drag-handle',
                         ghostClass: 'sortable-ghost',
                         dragClass: 'sortable-drag',
-                        forceFallback: true, // 強制使用 fallback 以提高手機端相容性
+                        forceFallback: true, // 提升手機版相容性
                         onEnd: (evt) => {
                             const newList = [...rankedList];
                             const [movedItem] = newList.splice(evt.oldIndex, 1);
@@ -233,7 +236,7 @@
 
             return (
                 <div className="min-h-screen">
-                    {/* Header */}
+                    {/* Header 頂部導航 */}
                     <header className="bg-white border-b border-[#E8E4DE] sticky top-0 z-[60] px-6 py-4">
                         <div className="max-w-7xl mx-auto flex justify-between items-center">
                             <div>
@@ -257,7 +260,7 @@
                                     </p>
                                 </div>
 
-                                {/* 分類篩選 */}
+                                {/* 類別篩選器 */}
                                 <div className="flex flex-wrap justify-center gap-2 mb-10 sticky top-[80px] z-40 bg-[#F5F2EDBF] backdrop-blur-sm py-2">
                                     {CATEGORIES.map(cat => (
                                         <button
@@ -272,7 +275,7 @@
                                     ))}
                                 </div>
 
-                                {/* 牌卡網格 */}
+                                {/* 牌卡格網 */}
                                 <div className="card-grid">
                                     {filteredCards.map(card => {
                                         const isSelected = selectedCards.some(c => c.text === card.text);
@@ -344,9 +347,10 @@
                                         ⚠️ 建議精簡至 10-15 張效果最佳
                                     </div>
                                 )}
-                                <button onClick={() => setStep(1)} className="text-[10px] tracking-[0.2em] uppercase border-b border-[#E8E4DE] pb-1 hover:text-[#545B64] transition-colors mt-4 inline-block">返回選取更多</button>
+                                <button onClick={() => setStep(1)} className="text-[10px] tracking-[0.2em] uppercase border-b border-[#E8E4DE] pb-1 hover:text-[#545B64] transition-colors mt-4 inline-block font-sans">返回選取更多</button>
                             </div>
 
+                            {/* 排序清單區塊 */}
                             <div ref={sortableContainerRef} className="space-y-3 pb-10">
                                 {rankedList.map((card, index) => {
                                     const style = getCategoryStyle(card.category);
