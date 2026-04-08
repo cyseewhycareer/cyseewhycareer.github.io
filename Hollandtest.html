@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Siyaseewhy 職涯性格測驗</title>
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 React 與 ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- 引入 Babel 來編譯 JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Google Fonts 增加文青感 -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans TC', sans-serif; }
+    .font-serif { font-family: 'Noto Serif TC', serif; }
+  </style>
+</head>
+<body class="bg-[#F7F6F3]">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    // --- 替換原有的 Lucide Icons 為內建 SVG 組件 ---
+    const ChevronRight = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>;
+    const ChevronLeft = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>;
+    const RefreshCcw = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>;
+    const Briefcase = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>;
+    const User = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+    const LineChart = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>;
+    const Cpu = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="16" x="4" y="4" rx="2" ry="2"/><rect width="6" height="6" x="9" y="9" rx="1" ry="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>;
+    const Paintbrush = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg>;
+    const BookOpen = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
+    const Target = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
+    const Coffee = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>;
+    const Compass = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>;
+    const Lock = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+    const Key = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>;
+
+    // --- 設定專屬存取碼 ---
+    const VALID_PASSCODES = ['CYSEEWHY', 'CY2026']; 
+
+    // --- 題目資料庫 (基礎 12 題 - 職場行為) ---
+    const QUESTIONS = [
+      { id: 1, type: 'R', text: "比起純粹發想點子或討論策略，我更喜歡親自處理「有明確產出」的任務（例如：寫程式、手作、操作設備），看見具體的成果會讓我很有踏實感。" },
+      { id: 2, type: 'I', text: "遇到我不懂的現象或新知識時，我會想找出它「背後的原理」。即使這件事跟我目前的工作無關，我也常會因為單純的好奇心去查資料搞懂它。" },
+      { id: 3, type: 'A', text: "我喜歡那些沒有標準答案的任務。能讓我有空間發揮創意、加入個人美感或獨特想法的過程，會讓我感到興奮。" },
+      { id: 4, type: 'S', text: "當朋友或同事遇到煩惱時，他們常會找我傾吐，而我也很願意花時間陪伴、傾聽並給予支持。" },
+      { id: 5, type: 'E', text: "在團隊中，如果有機會，我會很享受擔任「發起人」或「說服者」的角色，帶動大家的氣氛並引導事情的方向。" },
+      { id: 6, type: 'C', text: "我對「亂糟糟」的狀態容忍度較低，喜歡把雜亂的資訊、檔案或行程整理得有條有理，且喜歡照著計畫走。" },
+      { id: 7, type: 'R', text: "在團隊分工時，比起負責「概念規劃」，我更傾向擔任「技術實作」的角色。我享受運用工具或自己的雙手，把想法變成真正運作中的成品。" },
+      { id: 8, type: 'I', text: "面對一個沒有標準答案的複雜議題（例如社會事件的爭議），我喜歡抽絲剝繭，客觀分析各方觀點與成因，而不是輕易下定論。" },
+      { id: 9, type: 'A', text: "如果一件事情只有「唯一一種做法」會讓我感到無聊。我喜歡嘗試不一樣的解法，或是把它變得更有趣、更有設計感。" },
+      { id: 10, type: 'S', text: "在群體中，我常不自覺扮演「潤滑劑」的角色。比起競爭贏過別人，我更在意大家相處得開不開心、有沒有人被冷落。" },
+      { id: 11, type: 'E', text: "我喜歡「推動事情前進」的感覺，不論是發想企劃或是辦活動，能發揮我的影響力並看見任務最終順利落地，會讓我很有成就感。" },
+      { id: 12, type: 'C', text: "我對「精確度」有一種執著。比起需要大量臨場發揮的任務，我更享受把一件事情按照規則或架構，整理到「井然有序、零失誤」的狀態。" }
+    ];
+
+    // --- 進階確認題 (工作深層拷問 6 題) ---
+    const ADVANCED_QUESTIONS = [
+      { id: 'adv_1', type: 'R', text: "【進階確認】我非常享受「親手創造或修復」的過程（例如：刻一段程式碼、做手工、修繕、烹飪），看到實體產出會讓我感到極度踏實。" },
+      { id: 'adv_2', type: 'I', text: "【進階確認】我有一種「解謎狂熱」。當遇到一個極度複雜、大家都束手無策的難題時，我反而會感到興奮，忍不住想去鑽研破解它。" },
+      { id: 'adv_3', type: 'A', text: "【進階確認】我極度需要表達「個人特色」的空間。如果工作只能完全複製別人的SOP，毫無自己發揮的餘地，我會感到非常痛苦。" },
+      { id: 'adv_4', type: 'S', text: "【進階確認】我內建一種「同理心雷達」，總是能輕易察覺空間裡誰的情緒低落，並且會不自覺地想要去照顧對方的心情。" },
+      { id: 'adv_5', type: 'E', text: "【進階確認】我具備強烈的「號召力」。當我真心相信一個目標時，我有自信能用熱情或策略去說服他人認同，並帶動大家一起前進。" },
+      { id: 'adv_6', type: 'C', text: "【進階確認】我是個不折不扣的「細節/格式控」。在別人覺得「差不多就好」的地方，我會忍不住想把它對齊、分類並做到精確無誤。" }
+    ];
+
+    // --- 原廠設定題 (生活日常 12 題 - 完全抽離工作) ---
+    const LIFE_QUESTIONS = [
+      { id: 'life_1', type: 'R', text: "【生活原廠設定】休假時，我喜歡讓身體動起來或動手做點什麼（例如：組裝IKEA家具、戶外運動、烹飪、整理居家），這比整天坐在沙發上滑手機讓我更有充電的感覺。" },
+      { id: 'life_2', type: 'I', text: "【生活原廠設定】我常常會因為一個日常的小困惑（例如：某部電影的歷史背景、某種植物的學名），就不小心在維基百科或網路上「精神時光屋」鑽研好幾個小時。" },
+      { id: 'life_3', type: 'A', text: "【生活原廠設定】我非常需要能讓我「感受美」或「發揮想像力」的休閒活動。不管是看展覽、聽音樂、看獨立電影，或是自己隨手寫作、畫畫，這些都是我生活中不可或缺的養分。" },
+      { id: 'life_4', type: 'S', text: "【生活原廠設定】對我來說，最好的休息就是和幾個知心好友找間咖啡廳，來一場深度交心的對話。比起去哪裡玩，我更在乎「跟誰在一起」。" },
+      { id: 'life_5', type: 'E', text: "【生活原廠設定】在朋友圈裡，我通常是那個「揪團者」或「決策者」。不管是決定聚餐吃什麼、還是規劃出國玩，大家都滿習慣聽我的意見或由我來喬時間。" },
+      { id: 'life_6', type: 'C', text: "【生活原廠設定】我的私生活充滿了各種「清單」或「記帳本」。我喜歡把東西分門別類收納好，或是把出遊行程排得清清楚楚，這會帶給我極大的安全感。" },
+      { id: 'life_7', type: 'R', text: "【生活原廠設定】在日常休閒中，我非常享受「動手操作」的過程。不管是組裝複雜的樂高/模型、保養愛車/單車，還是做手工藝，那種使用工具並看著實體在手中成型的感覺讓我非常著迷。" },
+      { id: 'life_8', type: 'I', text: "【生活原廠設定】看新聞、電影或紀錄片時，我不滿足於表面的劇情。我常會暫停去查證背後的「真實歷史、科學理論或社會結構」，享受那種豁然開朗的解謎感。" },
+      { id: 'life_9', type: 'A', text: "【生活原廠設定】挑選日常用品、穿搭或佈置房間時，我非常在乎「美感」與「獨特性」。就算只是一個普通的馬克杯，只要夠特別或能展現我的品味，我就會感到愉悅。" },
+      { id: 'life_10', type: 'S', text: "【生活原廠設定】參加聚會時，我很容易注意到那些「落單」或「插不上話」的人。我常會主動去搭話、遞飲料或做球給他們，確保每個人都覺得被照顧到。" },
+      { id: 'life_11', type: 'E', text: "【生活原廠設定】當我迷上某個新興趣、好用的產品或好吃的餐廳時，我會展現極強的「推坑力」，超級熱血地說服周遭朋友去嘗試，而且常常能成功讓他們買單（認同並行動）。" },
+      { id: 'life_12', type: 'C', text: "【生活原廠設定】我有強迫症般的「歸檔癖好」。不管是電腦桌面上的資料夾、手機裡的照片，還是衣櫃裡的衣服，只要把它們按照邏輯分類排整齊，我就會感到莫名舒壓。" }
+    ];
+
+    // 打亂各題庫
+    const SHUFFLED_QUESTIONS = [...QUESTIONS].sort(() => Math.random() - 0.5);
+    const SHUFFLED_ADV_QUESTIONS = [...ADVANCED_QUESTIONS].sort(() => Math.random() - 0.5);
+    const SHUFFLED_LIFE_QUESTIONS = [...LIFE_QUESTIONS].sort(() => Math.random() - 0.5);
+
+    // --- 類型解說資料庫 (莫蘭迪色系) ---
+    const TYPE_DETAILS = {
+      R: { name: '實作型 (Realistic)', icon: Cpu, color: 'bg-[#C6A485]', textcolor: 'text-[#C6A485]', text: '喜歡具體、有形的事物，擅長運用工具、技術或系統，通常務實且重視實際產出。' },
+      I: { name: '研究型 (Investigative)', icon: BookOpen, color: 'bg-[#8B9DA4]', textcolor: 'text-[#8B9DA4]', text: '熱愛思考與分析，喜歡探索未知，追求邏輯與真理，通常較為理性。' },
+      A: { name: '藝術型 (Artistic)', icon: Paintbrush, color: 'bg-[#A89CAE]', textcolor: 'text-[#A89CAE]', text: '重視美感與創意，喜歡非結構化的環境，渴望表達自我，充滿想像力。' },
+      S: { name: '社交型 (Social)', icon: User, color: 'bg-[#9CAEA1]', textcolor: 'text-[#9CAEA1]', text: '喜歡與人接觸，熱心助人，擅長教學或諮商，具有高度的同理心。' },
+      E: { name: '企業型 (Enterprising)', icon: LineChart, color: 'bg-[#BA8E8E]', textcolor: 'text-[#BA8E8E]', text: '喜歡影響他人、帶領團隊，追求商業成就與地位，具備說服與冒險精神。' },
+      C: { name: '常規型 (Conventional)', icon: Briefcase, color: 'bg-[#A19D98]', textcolor: 'text-[#A19D98]', text: '喜歡有組織、有條理的工作，注重細節與數據，善於遵循規範與流程。' }
+    };
+
+    function App() {
+      const [isUnlocked, setIsUnlocked] = useState(false);
+      const [passcodeInput, setPasscodeInput] = useState('');
+      const [passcodeError, setPasscodeError] = useState('');
+
+      const [step, setStep] = useState('intro'); // 'intro', 'testing', 'result'
+      const [currentTest, setCurrentTest] = useState('basic'); 
+      const [completedTests, setCompletedTests] = useState([]); 
+      
+      const [currentQIndex, setCurrentQIndex] = useState(0);
+      const [history, setHistory] = useState([]);
+
+      const getActiveQuestions = () => {
+        if (currentTest === 'advanced') return SHUFFLED_ADV_QUESTIONS;
+        if (currentTest === 'life') return SHUFFLED_LIFE_QUESTIONS;
+        return SHUFFLED_QUESTIONS;
+      };
+      const activeQuestions = getActiveQuestions();
+
+      const maxPossibleScore = 10 
+        + (completedTests.includes('advanced') ? 5 : 0) 
+        + (completedTests.includes('life') ? 10 : 0);
+
+      const handleAnswer = (score) => {
+        const currentQ = activeQuestions[currentQIndex];
+        setHistory(prev => [...prev, { type: currentQ.type, score, testType: currentTest }]);
+
+        if (currentQIndex < activeQuestions.length - 1) {
+          setCurrentQIndex(prev => prev + 1);
+        } else {
+          setCompletedTests(prev => [...prev, currentTest]);
+          setCurrentTest(null); 
+          setStep('result');
+        }
+      };
+
+      const handlePrevious = () => {
+        if (currentQIndex === 0) return;
+        setHistory(prev => prev.slice(0, -1));
+        setCurrentQIndex(prev => prev - 1);
+      };
+
+      const startAdditionalTest = (testType) => {
+        setCurrentTest(testType);
+        setCurrentQIndex(0);
+        setStep('testing');
+      };
+
+      const resetTest = () => {
+        setCompletedTests([]);
+        setCurrentTest('basic');
+        setCurrentQIndex(0);
+        setHistory([]);
+        setStep('intro');
+      };
+
+      const results = useMemo(() => {
+        if (step !== 'result') return null;
+        
+        const sc = {
+          basic: { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 },
+          life: { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 },
+          advanced: { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 },
+          total: { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 }
+        };
+
+        history.forEach(ans => {
+          if (sc[ans.testType] !== undefined) {
+            sc[ans.testType][ans.type] += ans.score;
+          }
+          sc.total[ans.type] += ans.score;
+        });
+
+        const getTop3 = (scoreObj) => {
+          return Object.entries(scoreObj)
+            .map(([type, score]) => ({ type, score }))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3);
+        };
+
+        const top3Total = getTop3(sc.total);
+        const top3Basic = getTop3(sc.basic); 
+        const top3Life = getTop3(sc.life);   
+
+        return { 
+          scores: sc, 
+          top3Total, 
+          top3Basic, 
+          top3Life, 
+          hollandCode: top3Total.map(item => item.type).join('') 
+        };
+      }, [history, step]);
+
+      const handleUnlock = (e) => {
+        e.preventDefault();
+        const inputCleaned = passcodeInput.trim().toUpperCase();
+        if (VALID_PASSCODES.includes(inputCleaned)) {
+          setIsUnlocked(true);
+          setPasscodeError('');
+        } else {
+          setPasscodeError('存取碼無效，請向 Siyaseewhy 諮商師確認正確代碼。');
+        }
+      };
+
+      let mainContent;
+
+      if (!isUnlocked) {
+        mainContent = (
+          <div className="max-w-sm w-full bg-white/80 backdrop-blur-md rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-stone-100 p-10 transition-all duration-300">
+            <div className="text-center mb-8">
+              <div className="w-14 h-14 bg-[#EBE9E4] rounded-full flex items-center justify-center mx-auto mb-6">
+                <Lock className="w-6 h-6 text-stone-500" strokeWidth={1.5} />
+              </div>
+              <h2 className="text-sm font-medium tracking-[0.2em] text-[#8B9DA4] uppercase mb-3">Siyaseewhy</h2>
+              <h1 className="text-2xl font-serif text-stone-800 mb-2 tracking-wide">專屬測驗入口</h1>
+              <p className="text-sm text-stone-500 font-light tracking-wide leading-relaxed mt-2">此為內部深度評測工具<br/>請輸入專屬存取碼解鎖</p>
+            </div>
+            
+            <form onSubmit={handleUnlock} className="space-y-6">
+              <div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Key className="h-4 w-4 text-stone-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={passcodeInput}
+                    onChange={(e) => {
+                      setPasscodeInput(e.target.value);
+                      setPasscodeError(''); 
+                    }}
+                    className="block w-full pl-11 pr-4 py-3.5 border border-stone-200 rounded-2xl leading-5 bg-white/50 placeholder-stone-400 focus:outline-none focus:border-[#8B9DA4] focus:ring-1 focus:ring-[#8B9DA4] transition-all tracking-widest uppercase text-stone-700 text-sm"
+                    placeholder="輸入存取碼 (例如: CY2026)"
+                    autoComplete="off"
+                  />
+                </div>
+                {passcodeError && (
+                  <p className="mt-3 text-xs text-[#BA8E8E] text-center font-medium tracking-wide animate-pulse">{passcodeError}</p>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl text-sm font-medium tracking-widest text-white bg-stone-800 hover:bg-stone-700 focus:outline-none transition-all shadow-sm hover:shadow"
+              >
+                驗證並解鎖
+              </button>
+            </form>
+          </div>
+        );
+      } else if (step === 'intro') {
+        mainContent = (
+          <div className="max-w-md w-full bg-white/90 backdrop-blur-md rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-stone-100 p-10 text-center transition-all duration-300">
+            <div className="w-16 h-16 bg-[#EBE9E4] rounded-full flex items-center justify-center mx-auto mb-8">
+              <Compass className="w-7 h-7 text-stone-600" strokeWidth={1.5} />
+            </div>
+            <h2 className="text-xs font-bold tracking-[0.25em] text-[#C6A485] uppercase mb-4">Siyaseewhy</h2>
+            <h1 className="text-3xl font-serif text-stone-800 mb-6 tracking-wide">職涯性格深度探索</h1>
+            
+            <div className="h-px w-12 bg-stone-200 mx-auto mb-6"></div>
+            
+            <p className="text-stone-600 mb-10 leading-loose font-light tracking-wide text-sm">
+              <span className="block font-medium text-stone-700 mb-4">看見你的為什麼，找回靈魂的原廠設定。</span>
+              請放下一切社會期待與對錯<br/>
+              憑藉你最真實的直覺作答<br/>
+              我們將透過日常與工作情境<br/>找出你最純粹的天賦。
+            </p>
+            <button 
+              onClick={() => { setCurrentTest('basic'); setStep('testing'); }}
+              className="w-full bg-stone-800 hover:bg-stone-700 text-white font-medium tracking-widest py-4 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 shadow-sm hover:shadow"
+            >
+              開始探索 <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        );
+      } else if (step === 'testing') {
+        const progress = ((currentQIndex) / activeQuestions.length) * 100;
+        
+        let ThemeConfig = { 
+          bg: 'bg-[#8B9DA4]', badgeBg: 'bg-[#F2F4F5]', badgeBorder: 'border-[#E0E5E7]', badgeText: 'text-[#687C85]', icon: Briefcase, title: '基礎對話' 
+        };
+        if (currentTest === 'advanced') {
+          ThemeConfig = { bg: 'bg-[#A89CAE]', badgeBg: 'bg-[#F6F5F7]', badgeBorder: 'border-[#E8E4E9]', badgeText: 'text-[#84788A]', icon: Target, title: '深度挖掘' };
+        }
+        if (currentTest === 'life') {
+          ThemeConfig = { bg: 'bg-[#C6A485]', badgeBg: 'bg-[#FAF7F4]', badgeBorder: 'border-[#EFE8E1]', badgeText: 'text-[#A38264]', icon: Coffee, title: '生活原廠設定' };
+        }
+
+        mainContent = (
+          <div className="max-w-xl w-full bg-white/90 backdrop-blur-md rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-stone-100 p-8 md:p-10">
+            
+            {currentTest !== 'basic' && (
+              <div className={`${ThemeConfig.badgeBg} border ${ThemeConfig.badgeBorder} ${ThemeConfig.badgeText} text-xs font-medium tracking-widest px-4 py-2 rounded-full mb-8 inline-flex items-center gap-2`}>
+                <ThemeConfig.icon className="w-3.5 h-3.5" strokeWidth={1.5} /> {ThemeConfig.title}
+              </div>
+            )}
+
+            <div className="mb-10">
+              <div className="flex justify-between items-center text-xs text-stone-400 mb-3 font-medium tracking-widest uppercase">
+                {currentQIndex > 0 ? (
+                  <button 
+                    onClick={handlePrevious}
+                    className="flex items-center text-stone-400 hover:text-stone-600 transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" /> 回上一題
+                  </button>
+                ) : (
+                  <span className="text-transparent">回上一題</span>
+                )}
+                <span>{currentQIndex + 1} / {activeQuestions.length}</span>
+              </div>
+              <div className="w-full bg-[#EBE9E4] rounded-full h-1">
+                <div 
+                  className={`h-1 rounded-full transition-all duration-500 ease-out ${ThemeConfig.bg}`}
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="min-h-[140px] flex items-center mb-10">
+              <h2 className="text-xl md:text-2xl font-serif text-stone-700 leading-relaxed tracking-wide">
+                {activeQuestions[currentQIndex].text.replace(/【.*?】/, '')}
+              </h2>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {[
+                { score: 5, label: '這完全就是我', hover: 'hover:bg-[#F2F5F6] hover:border-[#8B9DA4] hover:text-[#5B6C73]' },
+                { score: 4, label: '滿符合的', hover: 'hover:bg-[#F7F9FA] hover:border-[#A6B4B9] hover:text-[#7A8A92]' },
+                { score: 3, label: '普通 / 說不上來', hover: 'hover:bg-[#F5F4F1] hover:border-[#D6D2C4] hover:text-stone-600' },
+                { score: 2, label: '不太像我', hover: 'hover:bg-[#FCF8F8] hover:border-[#CBA5A5] hover:text-[#A87F7F]' },
+                { score: 1, label: '完全不像我', hover: 'hover:bg-[#FAF3F3] hover:border-[#BA8E8E] hover:text-[#916565]' }
+              ].map((option) => (
+                <button
+                  key={option.score}
+                  onClick={() => handleAnswer(option.score)}
+                  className={`w-full py-4 px-6 rounded-2xl border border-[#EBE9E4] bg-white text-center font-light tracking-widest text-stone-500 transition-all duration-300 ${option.hover} active:scale-[0.99]`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      } else if (step === 'result' && results) {
+        const hasDoneAdvanced = completedTests.includes('advanced');
+        const hasDoneLife = completedTests.includes('life');
+
+        mainContent = (
+          <div className="max-w-3xl w-full bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-stone-100 p-8 md:p-12 my-8">
+            
+            <div className="text-center mb-14">
+              <h2 className="text-xs font-medium tracking-[0.2em] text-[#C6A485] uppercase mb-4">
+                Siyaseewhy {completedTests.length > 1 ? '深度綜合解析' : '專屬性格解析'}
+              </h2>
+              <h1 className="text-4xl md:text-5xl font-serif text-stone-800 mb-6 tracking-wide">
+                {results.hollandCode}
+              </h1>
+              <div className="h-px w-12 bg-stone-200 mx-auto"></div>
+            </div>
+
+            {/* === 工作 vs 生活 對照面板 === */}
+            {hasDoneLife && (
+              <div className="mb-14">
+                <h3 className="font-serif text-xl text-stone-700 mb-6 flex items-center gap-3">
+                  <Compass className="w-5 h-5 text-stone-400" strokeWidth={1.5} /> 內外在對話
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  {/* 工作 */}
+                  <div className="bg-[#FCFBF9] border border-[#F0EBE1] rounded-3xl p-6 md:p-8">
+                    <h4 className="font-medium text-stone-500 tracking-widest text-xs mb-6 flex items-center gap-2">
+                      <Briefcase className="w-4 h-4"/> 職場中的你
+                    </h4>
+                    <div className="space-y-4">
+                      {results.top3Basic.map((item, i) => (
+                        <div key={item.type} className="flex justify-between items-center border-b border-stone-100 pb-3 last:border-0 last:pb-0">
+                          <span className="font-serif text-stone-700 tracking-wide">
+                            {i+1}. {TYPE_DETAILS[item.type].name.split(' ')[0]}
+                          </span>
+                          <span className={`text-sm font-medium ${TYPE_DETAILS[item.type].textcolor}`}>{item.score} <span className="text-xs text-stone-300 font-light">pt</span></span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 生活 */}
+                  <div className="bg-[#FCFBF9] border border-[#F0EBE1] rounded-3xl p-6 md:p-8">
+                    <h4 className="font-medium text-stone-500 tracking-widest text-xs mb-6 flex items-center gap-2">
+                      <Coffee className="w-4 h-4"/> 生活中的你
+                    </h4>
+                    <div className="space-y-4">
+                      {results.top3Life.map((item, i) => (
+                        <div key={item.type} className="flex justify-between items-center border-b border-stone-100 pb-3 last:border-0 last:pb-0">
+                          <span className="font-serif text-stone-700 tracking-wide">
+                            {i+1}. {TYPE_DETAILS[item.type].name.split(' ')[0]}
+                          </span>
+                          <span className={`text-sm font-medium ${TYPE_DETAILS[item.type].textcolor}`}>{item.score} <span className="text-xs text-stone-300 font-light">pt</span></span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 bg-[#FAF9F7] p-6 rounded-3xl text-sm text-stone-500 leading-relaxed font-light tracking-wide">
+                  <span className="font-medium text-[#C6A485] mr-2">Siyaseewhy 諮商師手記：</span>
+                  觀察兩側的前三名排列，若兩側高度重合，代表你幸運地在工作中實踐了真我；若產生落差，也許是你為了適應環境戴上了面具，這會是值得我們深入探討的契機。
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4 mb-14">
+              <h3 className="font-serif text-xl text-stone-700 mb-6 flex items-center gap-3">
+                <User className="w-5 h-5 text-stone-400" strokeWidth={1.5} /> 核心特質
+              </h3>
+              {results.top3Total.map((item, index) => {
+                const details = TYPE_DETAILS[item.type];
+                const Icon = details.icon;
+                return (
+                  <div key={item.type} className="flex items-start gap-5 p-6 rounded-3xl bg-white border border-[#F0EBE1] hover:shadow-[0_4px_20px_rgb(0,0,0,0.02)] transition-all">
+                    <div className={`p-4 rounded-2xl text-white shrink-0 ${details.color}`}>
+                      <Icon className="w-5 h-5" strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <h4 className="font-serif text-stone-800 text-lg mb-1 flex items-center gap-3 tracking-wide">
+                        {details.name}
+                        <span className="text-xs font-sans font-medium text-stone-400 bg-stone-50 px-3 py-1 rounded-full tracking-wider">
+                          {item.score} / {maxPossibleScore}
+                        </span>
+                      </h4>
+                      <p className="text-sm text-stone-500 mt-2 leading-relaxed font-light tracking-wide">{details.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mb-14">
+              <h3 className="font-serif text-xl text-stone-700 mb-8 flex items-center gap-3">
+                <LineChart className="w-5 h-5 text-stone-400" strokeWidth={1.5} /> 維度分佈
+              </h3>
+              <div className="space-y-5 px-2">
+                {Object.entries(results.scores.total).map(([type, score]) => {
+                  const details = TYPE_DETAILS[type];
+                  const percentage = (score / maxPossibleScore) * 100; 
+                  
+                  return (
+                    <div key={type} className="flex items-center gap-4">
+                      <div className="w-6 font-medium text-stone-400 text-sm">{type}</div>
+                      <div className="flex-1 bg-[#F2F0EB] rounded-full h-1.5 overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-1000 ${details.color}`}
+                          style={{ width: `${percentage}%` }}
+                        ></div>
+                      </div>
+                      <div className="w-8 text-right text-sm text-stone-400 font-light">{score}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 探索更多面向 */}
+            {(!hasDoneAdvanced || !hasDoneLife) && (
+              <div className="mb-12 space-y-4 pt-8 border-t border-stone-100">
+                <h3 className="font-serif text-lg text-stone-700 mb-4 tracking-wide text-center">
+                  繼續探索其他面向
+                </h3>
+                
+                {!hasDoneLife && (
+                  <button 
+                    onClick={() => startAdditionalTest('life')}
+                    className="w-full bg-[#FCFBF9] hover:bg-[#F5F4F1] border border-[#F0EBE1] text-stone-700 py-5 px-6 rounded-3xl flex items-center justify-between transition-all duration-300 text-left group"
+                  >
+                    <div>
+                      <div className="flex items-center gap-3 mb-1.5 font-medium tracking-widest text-sm">
+                        <Coffee className="w-4 h-4 text-[#C6A485]" strokeWidth={1.5} /> 脫下工作面具：原廠設定
+                      </div>
+                      <div className="text-xs font-light text-stone-400 tracking-wide leading-relaxed">透過 12 題日常情境，找出最純粹的靈魂。</div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors shrink-0" />
+                  </button>
+                )}
+
+                {!hasDoneAdvanced && (
+                  <button 
+                    onClick={() => startAdditionalTest('advanced')}
+                    className="w-full bg-[#FCFBF9] hover:bg-[#F5F4F1] border border-[#F0EBE1] text-stone-700 py-5 px-6 rounded-3xl flex items-center justify-between transition-all duration-300 text-left group"
+                  >
+                    <div>
+                      <div className="flex items-center gap-3 mb-1.5 font-medium tracking-widest text-sm">
+                        <Target className="w-4 h-4 text-[#8B9DA4]" strokeWidth={1.5} /> 猶疑確認：深度挖掘
+                      </div>
+                      <div className="text-xs font-light text-stone-400 tracking-wide leading-relaxed">分數過於接近？透過 6 題極端情境打破平手。</div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors shrink-0" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className="pt-6 flex justify-center">
+              <button 
+                onClick={resetTest}
+                className="text-stone-400 hover:text-stone-600 font-light text-sm tracking-widest flex items-center gap-2 transition-colors duration-200"
+              >
+                <RefreshCcw className="w-3.5 h-3.5" /> 重新開始測驗
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen bg-[#F7F6F3] flex flex-col font-sans text-stone-800 selection:bg-[#E2DED5]">
+          {/* 品牌導覽列 */}
+          <header className="w-full p-6 md:px-10 md:py-8 flex justify-center md:justify-start shrink-0">
+            <div className="font-serif text-xl tracking-[0.2em] font-bold text-stone-700 cursor-default select-none">
+              Siyaseewhy<span className="text-[#C6A485]">.</span>
+            </div>
+          </header>
+
+          {/* 測驗動態內容 */}
+          <main className="flex-1 flex items-center justify-center p-4 w-full">
+            {mainContent}
+          </main>
+
+          {/* 底部學理宣告與版權 */}
+          <footer className="w-full py-8 px-4 text-center text-xs text-stone-400 tracking-[0.1em] md:tracking-[0.15em] font-light shrink-0">
+            <p className="mb-2">參考心理學家 Holland Codes 的 RIASEC 人格職業特質</p>
+            <p className="opacity-60">© {new Date().getFullYear()} Siyaseewhy. All rights reserved.</p>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
