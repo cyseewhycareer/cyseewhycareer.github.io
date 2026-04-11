@@ -11,18 +11,33 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <!-- 引入 Babel 來編譯 JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- 引入 html2canvas 實現高畫質圖片下載 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <!-- Google Fonts 增加文青感 -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Noto Sans TC', sans-serif; }
     .font-serif { font-family: 'Noto Serif TC', serif; }
+    
+    /* 強制在列印/存成PDF時保留背景顏色與圖形 */
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background-color: #F7F6F3 !important;
+      }
+      /* 隱藏列印時的滾動條，讓版面更乾淨 */
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body class="bg-[#F7F6F3]">
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useMemo } = React;
+    const { useState, useMemo, useRef } = React;
 
     // --- 替換原有的 Lucide Icons 為內建 SVG 組件 ---
     const ChevronRight = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>;
@@ -39,6 +54,7 @@
     const Compass = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>;
     const Lock = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
     const Key = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>;
+    const Download = ({className, strokeWidth=2}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>;
 
     // --- 設定專屬存取碼 (已進行字元編碼混淆，避免原始碼直接洩漏) ---
     // 解碼對應: "83,73,89,65,50,48,50,54" 即為 "SIYA2026"
@@ -113,6 +129,10 @@
       const [currentQIndex, setCurrentQIndex] = useState(0);
       const [history, setHistory] = useState([]);
 
+      // 新增：用於截圖的 Ref 與下載狀態
+      const resultRef = useRef(null);
+      const [isDownloading, setIsDownloading] = useState(false);
+
       const getActiveQuestions = () => {
         if (currentTest === 'advanced') return SHUFFLED_ADV_QUESTIONS;
         if (currentTest === 'life') return SHUFFLED_LIFE_QUESTIONS;
@@ -155,6 +175,33 @@
         setCurrentQIndex(0);
         setHistory([]);
         setStep('intro');
+      };
+
+      // 替換原有的 handlePrint 為高品質圖片截取邏輯
+      const handleDownloadImage = async () => {
+        if (!resultRef.current || isDownloading) return;
+        setIsDownloading(true);
+        try {
+          if (window.html2canvas) {
+            const canvas = await window.html2canvas(resultRef.current, {
+              scale: 2, // 提高圖片解析度，讓字體更清晰
+              backgroundColor: '#F7F6F3', // 確保背景色與網頁一致
+              useCORS: true
+            });
+            const image = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = image;
+            
+            // 動態命名檔案 (區分是否有生活題庫)
+            const fileName = completedTests.includes('life') ? '內外在對話' : '職場解析';
+            link.download = `Siyaseewhy_${fileName}_${results?.hollandCodeWork || ''}.png`;
+            link.click();
+          }
+        } catch (error) {
+          console.error('下載圖片失敗:', error);
+        } finally {
+          setIsDownloading(false);
+        }
       };
 
       const results = useMemo(() => {
@@ -245,7 +292,7 @@
                       setPasscodeError(''); 
                     }}
                     className="block w-full pl-11 pr-4 py-3.5 border border-stone-200 rounded-2xl leading-5 bg-white/50 placeholder-stone-400 focus:outline-none focus:border-[#8B9DA4] focus:ring-1 focus:ring-[#8B9DA4] transition-all tracking-widest uppercase text-stone-700 text-sm"
-                    placeholder="請輸入專屬存取碼"
+                    placeholder="輸入存取碼 (例如: CY2026)"
                     autoComplete="off"
                   />
                 </div>
@@ -365,8 +412,22 @@
         const maxLifeScore = 10;
 
         mainContent = (
-          <div className="max-w-3xl w-full bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-stone-100 p-8 md:p-12 my-8">
+          <div className="max-w-3xl w-full relative bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-stone-100 p-8 md:p-12 my-8">
             
+            {/* 右上角隱藏式快捷下載按鈕 (生成圖片時自動忽略) */}
+            <button 
+              onClick={handleDownloadImage} 
+              disabled={isDownloading}
+              data-html2canvas-ignore="true"
+              className="absolute top-6 right-6 md:top-8 md:right-8 text-stone-400 hover:text-[#8B9DA4] transition-colors print:hidden flex flex-col items-center gap-1 group disabled:opacity-50"
+              title="下載圖檔"
+            >
+              <div className="p-2 rounded-full bg-stone-50 group-hover:bg-[#F2F4F5] transition-colors">
+                <Download className="w-5 h-5" strokeWidth={1.5} />
+              </div>
+              <span className="text-[10px] tracking-widest font-light">{isDownloading ? '生成中' : '存成圖片'}</span>
+            </button>
+
             <div className="text-center mb-14">
               <h2 className="text-xs font-medium tracking-[0.2em] text-[#C6A485] uppercase mb-4">
                 Siyaseewhy {hasDoneLife ? '內外在性格解析' : '專屬職場性格解析'}
@@ -548,9 +609,9 @@
               </>
             )}
 
-            {/* 探索更多面向 */}
+            {/* 探索更多面向 (生成圖片時自動忽略) */}
             {(!hasDoneAdvanced || !hasDoneLife) && (
-              <div className="mb-12 space-y-4 pt-8 border-t border-stone-100">
+              <div className="mb-12 space-y-4 pt-8 border-t border-stone-100 print:hidden" data-html2canvas-ignore="true">
                 <h3 className="font-serif text-lg text-stone-700 mb-4 tracking-wide text-center">
                   繼續探索其他面向
                 </h3>
@@ -587,7 +648,20 @@
               </div>
             )}
 
-            <div className="pt-6 flex justify-center">
+            {/* 下方主要動作區塊 (生成圖片時自動忽略) */}
+            <div className="pt-8 pb-4 flex flex-col items-center border-t border-stone-100 print:hidden" data-html2canvas-ignore="true">
+              <button 
+                onClick={handleDownloadImage}
+                disabled={isDownloading}
+                className={`w-full md:w-2/3 ${isDownloading ? 'bg-[#A89CAE]' : 'bg-[#8B9DA4] hover:bg-[#7A8C93]'} text-white font-medium tracking-widest py-4 px-6 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 shadow-sm hover:shadow mb-4`}
+              >
+                <Download className={`w-5 h-5 ${isDownloading ? 'animate-bounce' : ''}`} strokeWidth={1.5} /> 
+                {isDownloading ? '圖檔生成中，請稍候...' : '下載專屬解析圖檔 (PNG)'}
+              </button>
+              <p className="text-[11px] text-stone-400 font-light mb-6 tracking-wide text-center leading-relaxed">
+                💡 點擊後系統將自動為您擷取高畫質長圖<br className="md:hidden" />（包含品牌視覺與完整圖表）
+              </p>
+              
               <button 
                 onClick={resetTest}
                 className="text-stone-400 hover:text-stone-600 font-light text-sm tracking-widest flex items-center gap-2 transition-colors duration-200"
@@ -600,7 +674,7 @@
       }
 
       return (
-        <div className="min-h-screen bg-[#F7F6F3] flex flex-col font-sans text-stone-800 selection:bg-[#E2DED5]">
+        <div ref={resultRef} className="min-h-screen bg-[#F7F6F3] flex flex-col font-sans text-stone-800 selection:bg-[#E2DED5]">
           {/* 品牌導覽列 */}
           <header className="w-full p-6 md:px-10 md:py-8 flex justify-center md:justify-start shrink-0">
             <div className="font-serif text-xl tracking-[0.2em] font-bold text-stone-700 cursor-default select-none">
