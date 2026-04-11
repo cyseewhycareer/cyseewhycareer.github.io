@@ -163,34 +163,43 @@
         const sc = {
           basic: { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 },
           life: { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 },
-          advanced: { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 },
-          total: { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 }
+          advanced: { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 }
         };
 
         history.forEach(ans => {
           if (sc[ans.testType] !== undefined) {
             sc[ans.testType][ans.type] += ans.score;
           }
-          sc.total[ans.type] += ans.score;
         });
 
-        const getTop3 = (scoreObj) => {
+        // 將工作我 (基礎+深度挖掘) 與 生活我 完全分開
+        const workScores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+        const lifeScores = { ...sc.life };
+
+        Object.keys(workScores).forEach(type => {
+          workScores[type] = sc.basic[type] + sc.advanced[type];
+        });
+
+        const getSortedAll = (scoreObj) => {
           return Object.entries(scoreObj)
             .map(([type, score]) => ({ type, score }))
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 3);
+            .sort((a, b) => b.score - a.score);
         };
 
-        const top3Total = getTop3(sc.total);
-        const top3Basic = getTop3(sc.basic); 
-        const top3Life = getTop3(sc.life);   
+        const sortedWork = getSortedAll(workScores);
+        const sortedLife = getSortedAll(lifeScores);
+        const top3Work = sortedWork.slice(0, 3);
+        const top3Life = sortedLife.slice(0, 3);   
 
         return { 
-          scores: sc, 
-          top3Total, 
-          top3Basic, 
+          workScores,
+          lifeScores, 
+          sortedWork,
+          sortedLife,
+          top3Work, 
           top3Life, 
-          hollandCode: top3Total.map(item => item.type).join('') 
+          hollandCodeWork: top3Work.map(item => item.type).join(''),
+          hollandCodeLife: top3Life.map(item => item.type).join('')
         };
       }, [history, step]);
 
@@ -351,17 +360,35 @@
         const hasDoneAdvanced = completedTests.includes('advanced');
         const hasDoneLife = completedTests.includes('life');
 
+        // 定義各自的滿分基準
+        const maxWorkScore = 10 + (hasDoneAdvanced ? 5 : 0);
+        const maxLifeScore = 10;
+
         mainContent = (
           <div className="max-w-3xl w-full bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-stone-100 p-8 md:p-12 my-8">
             
             <div className="text-center mb-14">
               <h2 className="text-xs font-medium tracking-[0.2em] text-[#C6A485] uppercase mb-4">
-                Siyaseewhy {completedTests.length > 1 ? '深度綜合解析' : '專屬性格解析'}
+                Siyaseewhy {hasDoneLife ? '內外在性格解析' : '專屬職場性格解析'}
               </h2>
-              <h1 className="text-4xl md:text-5xl font-serif text-stone-800 mb-6 tracking-wide">
-                {results.hollandCode}
-              </h1>
-              <div className="h-px w-12 bg-stone-200 mx-auto"></div>
+              {hasDoneLife ? (
+                <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
+                  <div className="text-center">
+                    <div className="text-xs text-stone-400 tracking-widest mb-2">職場中的你</div>
+                    <h1 className="text-4xl md:text-5xl font-serif text-stone-800 tracking-wide">{results.hollandCodeWork}</h1>
+                  </div>
+                  <div className="hidden md:block w-px h-12 bg-stone-200"></div>
+                  <div className="text-center">
+                    <div className="text-xs text-[#C6A485] tracking-widest mb-2">生活中的你</div>
+                    <h1 className="text-4xl md:text-5xl font-serif text-[#C6A485] tracking-wide">{results.hollandCodeLife}</h1>
+                  </div>
+                </div>
+              ) : (
+                <h1 className="text-4xl md:text-5xl font-serif text-stone-800 mb-6 tracking-wide">
+                  {results.hollandCodeWork}
+                </h1>
+              )}
+              <div className="h-px w-12 bg-stone-200 mx-auto mt-6"></div>
             </div>
 
             {/* === 工作 vs 生活 對照面板 === */}
@@ -372,53 +399,53 @@
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  {/* 工作 */}
-                  <div className="bg-[#FCFBF9] border border-[#F0EBE1] rounded-3xl p-6 md:p-8">
-                    <h4 className="font-medium text-stone-500 tracking-widest text-xs mb-6 flex items-center gap-2">
-                      <Briefcase className="w-4 h-4"/> 職場中的你
-                    </h4>
-                    <div className="space-y-4">
-                      {results.top3Basic.map((item, i) => (
-                        <div key={item.type} className="flex justify-between items-center border-b border-stone-100 pb-3 last:border-0 last:pb-0">
-                          <span className="font-serif text-stone-700 tracking-wide">
-                            {i+1}. {TYPE_DETAILS[item.type].name.split(' ')[0]}
-                          </span>
-                          <span className={`text-sm font-medium ${TYPE_DETAILS[item.type].textcolor}`}>{item.score} <span className="text-xs text-stone-300 font-light">pt</span></span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 生活 */}
-                  <div className="bg-[#FCFBF9] border border-[#F0EBE1] rounded-3xl p-6 md:p-8">
-                    <h4 className="font-medium text-stone-500 tracking-widest text-xs mb-6 flex items-center gap-2">
-                      <Coffee className="w-4 h-4"/> 生活中的你
-                    </h4>
-                    <div className="space-y-4">
-                      {results.top3Life.map((item, i) => (
-                        <div key={item.type} className="flex justify-between items-center border-b border-stone-100 pb-3 last:border-0 last:pb-0">
-                          <span className="font-serif text-stone-700 tracking-wide">
-                            {i+1}. {TYPE_DETAILS[item.type].name.split(' ')[0]}
-                          </span>
-                          <span className={`text-sm font-medium ${TYPE_DETAILS[item.type].textcolor}`}>{item.score} <span className="text-xs text-stone-300 font-light">pt</span></span>
-                        </div>
-                      ))}
-                    </div>
+                {/* 工作 */}
+                <div className="bg-[#FCFBF9] border border-[#F0EBE1] rounded-3xl p-6 md:p-8">
+                  <h4 className="font-medium text-stone-500 tracking-widest text-xs mb-6 flex items-center gap-2">
+                    <Briefcase className="w-4 h-4"/> 職場中的你
+                  </h4>
+                  <div className="space-y-3">
+                    {results.sortedWork.map((item, i) => (
+                      <div key={item.type} className="flex justify-between items-center border-b border-stone-100 pb-2 last:border-0 last:pb-0">
+                        <span className={`font-serif tracking-wide ${i < 3 ? 'text-stone-800' : 'text-stone-400'}`}>
+                          {i+1}. {TYPE_DETAILS[item.type].name.split(' ')[0]}
+                        </span>
+                        <span className={`text-sm font-medium ${i < 3 ? TYPE_DETAILS[item.type].textcolor : 'text-stone-400'}`}>{item.score} <span className="text-xs font-light opacity-60">pt</span></span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="mt-6 bg-[#FAF9F7] p-6 rounded-3xl text-sm text-stone-500 leading-relaxed font-light tracking-wide">
+                {/* 生活 */}
+                <div className="bg-[#FCFBF9] border border-[#F0EBE1] rounded-3xl p-6 md:p-8">
+                  <h4 className="font-medium text-stone-500 tracking-widest text-xs mb-6 flex items-center gap-2">
+                    <Coffee className="w-4 h-4"/> 生活中的你
+                  </h4>
+                  <div className="space-y-3">
+                    {results.sortedLife.map((item, i) => (
+                      <div key={item.type} className="flex justify-between items-center border-b border-stone-100 pb-2 last:border-0 last:pb-0">
+                        <span className={`font-serif tracking-wide ${i < 3 ? 'text-stone-800' : 'text-stone-400'}`}>
+                          {i+1}. {TYPE_DETAILS[item.type].name.split(' ')[0]}
+                        </span>
+                        <span className={`text-sm font-medium ${i < 3 ? TYPE_DETAILS[item.type].textcolor : 'text-stone-400'}`}>{item.score} <span className="text-xs font-light opacity-60">pt</span></span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 bg-[#FAF9F7] p-6 rounded-3xl text-sm text-stone-500 leading-relaxed font-light tracking-wide">
                   <span className="font-medium text-[#C6A485] mr-2">Siyaseewhy 諮商師手記：</span>
-                  觀察兩側的前三名排列，若兩側高度重合，代表你幸運地在工作中實踐了真我；若產生落差，也許是你為了適應環境戴上了面具，這會是值得我們深入探討的契機。
+                  觀察兩側的前三名排列，若兩側高度重合，代表你幸運地在工作中實踐了真我；若產生落差，也許是你為了適應環境戴上了面具，但只要調適得宜，我們完全可以在不同的情境裡，展現不同維度的自己，這會是值得我們深入探討的契機。
                 </div>
               </div>
             )}
 
             <div className="space-y-4 mb-14">
               <h3 className="font-serif text-xl text-stone-700 mb-6 flex items-center gap-3">
-                <User className="w-5 h-5 text-stone-400" strokeWidth={1.5} /> 核心特質
+                <User className="w-5 h-5 text-stone-400" strokeWidth={1.5} /> 職場核心特質
               </h3>
-              {results.top3Total.map((item, index) => {
+              {results.top3Work.map((item, index) => {
                 const details = TYPE_DETAILS[item.type];
                 const Icon = details.icon;
                 return (
@@ -430,7 +457,7 @@
                       <h4 className="font-serif text-stone-800 text-lg mb-1 flex items-center gap-3 tracking-wide">
                         {details.name}
                         <span className="text-xs font-sans font-medium text-stone-400 bg-stone-50 px-3 py-1 rounded-full tracking-wider">
-                          {item.score} / {maxPossibleScore}
+                          {item.score} / {maxWorkScore}
                         </span>
                       </h4>
                       <p className="text-sm text-stone-500 mt-2 leading-relaxed font-light tracking-wide">{details.text}</p>
@@ -442,12 +469,12 @@
 
             <div className="mb-14">
               <h3 className="font-serif text-xl text-stone-700 mb-8 flex items-center gap-3">
-                <LineChart className="w-5 h-5 text-stone-400" strokeWidth={1.5} /> 維度分佈
+                <LineChart className="w-5 h-5 text-stone-400" strokeWidth={1.5} /> 職場維度分佈
               </h3>
               <div className="space-y-5 px-2">
-                {Object.entries(results.scores.total).map(([type, score]) => {
+                {Object.entries(results.workScores).map(([type, score]) => {
                   const details = TYPE_DETAILS[type];
-                  const percentage = (score / maxPossibleScore) * 100; 
+                  const percentage = (score / maxWorkScore) * 100; 
                   
                   return (
                     <div key={type} className="flex items-center gap-4">
@@ -464,6 +491,62 @@
                 })}
               </div>
             </div>
+
+            {/* === 新增：生活我 (一般核心特質) 的獨立區塊 === */}
+            {hasDoneLife && (
+              <>
+                <div className="space-y-4 mb-14 pt-10 border-t border-stone-100">
+                  <h3 className="font-serif text-xl text-stone-700 mb-6 flex items-center gap-3">
+                    <Coffee className="w-5 h-5 text-[#C6A485]" strokeWidth={1.5} /> 我的一般核心特質
+                  </h3>
+                  {results.top3Life.map((item, index) => {
+                    const details = TYPE_DETAILS[item.type];
+                    const Icon = details.icon;
+                    return (
+                      <div key={item.type} className="flex items-start gap-5 p-6 rounded-3xl bg-white border border-[#F0EBE1] hover:shadow-[0_4px_20px_rgb(0,0,0,0.02)] transition-all">
+                        <div className={`p-4 rounded-2xl text-white shrink-0 ${details.color}`}>
+                          <Icon className="w-5 h-5" strokeWidth={1.5} />
+                        </div>
+                        <div>
+                          <h4 className="font-serif text-stone-800 text-lg mb-1 flex items-center gap-3 tracking-wide">
+                            {details.name}
+                            <span className="text-xs font-sans font-medium text-[#C6A485] bg-[#FAF7F4] px-3 py-1 rounded-full tracking-wider">
+                              {item.score} / {maxLifeScore}
+                            </span>
+                          </h4>
+                          <p className="text-sm text-stone-500 mt-2 leading-relaxed font-light tracking-wide">{details.text}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mb-14">
+                  <h3 className="font-serif text-xl text-stone-700 mb-8 flex items-center gap-3">
+                    <LineChart className="w-5 h-5 text-[#C6A485]" strokeWidth={1.5} /> 一般維度分佈
+                  </h3>
+                  <div className="space-y-5 px-2">
+                    {Object.entries(results.lifeScores).map(([type, score]) => {
+                      const details = TYPE_DETAILS[type];
+                      const percentage = (score / maxLifeScore) * 100; 
+                      
+                      return (
+                        <div key={type} className="flex items-center gap-4">
+                          <div className="w-6 font-medium text-stone-400 text-sm">{type}</div>
+                          <div className="flex-1 bg-[#F2F0EB] rounded-full h-1.5 overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-1000 ${details.color}`}
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                          <div className="w-8 text-right text-sm text-stone-400 font-light">{score}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* 探索更多面向 */}
             {(!hasDoneAdvanced || !hasDoneLife) && (
